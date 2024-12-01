@@ -83,7 +83,7 @@ mean_sst <- st_apply(sst_stack, c(1,2), mean, na.rm = TRUE)
 mean_sst <- mean_sst - 273.15
 ```
 
-```{r}
+```{r fig.height= 9}
 map1 <- tm_shape(mean_sst) +
   tm_raster(palette = hcl.colors(3,"Temps"),
             breaks = c(4,6,8,10,12,14,16,20,30,35),
@@ -91,12 +91,12 @@ map1 <- tm_shape(mean_sst) +
             title = "Sea surface temperature (°C)",
             ) +
   tm_graticules(lwd = 0.3, 
-                col = "steelblue3") +
+                col = "white") +
   tm_layout(fontfamily = "courier",
             main.title = "Sea surface temperature, U.S West Coast",
-            main.title.size = 0.9,
+            main.title.size = 1.2,
             legend.position = c("right","TOP"),
-            legend.text.size = 0.5,
+            legend.text.size = 0.8,
             legend.title.color = "white",
             legend.text.color = "white",
             legend.height = 5)
