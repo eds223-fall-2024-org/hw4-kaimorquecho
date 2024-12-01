@@ -85,7 +85,7 @@ mean_sst <- st_apply(mean_sst, )
 ```
 
 ```{r}
-tm_shape(mean_sst) +
+map1 <- tm_shape(mean_sst) +
   tm_raster(palette = rev(hcl.colors(8,"Blues")),
             colorNA = "tomato2",
             title = "Sea surface temperature (°C)") +
@@ -98,6 +98,5 @@ tm_shape(mean_sst) +
             legend.text.color = "white",
             legend.bg.color = "black",
             legend.height = 5)
-
 ```
 
