@@ -1,0 +1,103 @@
+---
+title: "Homework Assignment #4"
+format: html
+subtitle: "Exploring patterns of environmental justice"
+author: "Kaiju Morquecho"
+date: last-modified
+execute: 
+  eval: true
+  warning: false
+  message: false
+format:
+  html:
+    toc: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(stars)
+library(tidyverse)
+library(tmap)
+library(sf)
+library(here)
+library(raster)
+library(terra)
+```
+
+```{r}
+sst_2008 <- read_stars(here("data","average_annual_sst_2008.tif"))
+sst_2009 <- read_stars(here("data","average_annual_sst_2009.tif"))
+sst_2010 <- read_stars(here("data","average_annual_sst_2010.tif"))
+sst_2011 <- read_stars(here("data","average_annual_sst_2011.tif"))
+sst_2012 <- read_stars(here("data","average_annual_sst_2012.tif"))
+bathymetry <- read_stars(here("data","depth.tif"))
+ezz <- read_sf(here("data","wc_regions_clean.shp"), quiet = TRUE)
+
+```
+
+##### Check that CRS match
+
+```{r}
+st_crs(sst_2008) == st_crs(sst_2009)
+st_crs(sst_2008) == st_crs(sst_2010)
+st_crs(sst_2008) == st_crs(sst_2011)
+st_crs(sst_2008) == st_crs(sst_2012)
+```
+
+```{r}
+# check that ezz matches and transform if not
+if(st_crs(sst_2008) == st_crs(ezz)) {
+  print("crs match!")
+} else { 
+  ezz <- st_transform(ezz, st_crs(sst_2008))
+}
+
+# check that bathymetry matches and transform if not
+if(st_crs(sst_2008) == st_crs(bathymetry)) {
+  print("crs match!")
+} else { 
+  bathymetry <- st_transform(bathymetry, st_crs(sst_2008))
+}
+```
+
+```{r}
+# double-check after transformation 
+
+if(st_crs(sst_2008) == st_crs(bathymetry)) {
+  print("crs match!")
+} else { 
+  print("crs don't match!")
+}
+
+if(st_crs(sst_2008) == st_crs(ezz)) {
+  print("crs match!")
+} else { 
+  print("crs don't match!")
+}
+```
+
+```{r}
+sst_stack <- c(sst_2008, sst_2009, sst_2010, sst_2011, sst_2012)
+sst_stack <- st_redimension(sst_stack)
+mean_sst <- st_apply(sst_stack, c(1,2), mean, na.rm = TRUE)
+mean_sst <- st_apply(mean_sst, )
+```
+
+```{r}
+tm_shape(mean_sst) +
+  tm_raster(palette = rev(hcl.colors(8,"Blues")),
+            colorNA = "tomato2",
+            title = "Sea surface temperature (°C)") +
+  tm_graticules(lwd = 0.3, 
+                col = "black") +
+  tm_layout(fontfamily = "courier",
+            legend.position = c("right","TOP"),
+            legend.text.size = 0.5,
+            legend.title.color = "white",
+            legend.text.color = "white",
+            legend.bg.color = "black",
+            legend.height = 5)
+
+```
+
