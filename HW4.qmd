@@ -1,6 +1,5 @@
 ---
 title: "Homework Assignment #4"
-format: html
 subtitle: "Exploring patterns of environmental justice"
 author: "Kaiju Morquecho"
 date: last-modified
@@ -81,22 +80,27 @@ if(st_crs(sst_2008) == st_crs(ezz)) {
 sst_stack <- c(sst_2008, sst_2009, sst_2010, sst_2011, sst_2012)
 sst_stack <- st_redimension(sst_stack)
 mean_sst <- st_apply(sst_stack, c(1,2), mean, na.rm = TRUE)
-mean_sst <- st_apply(mean_sst, )
+mean_sst <- mean_sst - 273.15
 ```
 
 ```{r}
 map1 <- tm_shape(mean_sst) +
-  tm_raster(palette = rev(hcl.colors(8,"Blues")),
-            colorNA = "tomato2",
-            title = "Sea surface temperature (°C)") +
+  tm_raster(palette = hcl.colors(3,"Temps"),
+            breaks = c(4,6,8,10,12,14,16,20,30,35),
+            colorNA = "black",
+            title = "Sea surface temperature (°C)",
+            ) +
   tm_graticules(lwd = 0.3, 
-                col = "black") +
+                col = "steelblue3") +
   tm_layout(fontfamily = "courier",
+            main.title = "Sea surface temperature, U.S West Coast",
+            main.title.size = 0.9,
             legend.position = c("right","TOP"),
             legend.text.size = 0.5,
             legend.title.color = "white",
             legend.text.color = "white",
-            legend.bg.color = "black",
             legend.height = 5)
+
+map1
 ```
 
