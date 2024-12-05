@@ -13,6 +13,7 @@ format:
 editor_options: 
   chunk_output_type: console
 ---
+##### Load data and libraries
 
 ```{r}
 library(stars)
@@ -36,31 +37,28 @@ ezz <- read_sf(here("data","wc_regions_clean.shp"), quiet = TRUE)
 
 ```
 
-##### Check that CRS match
+##### Process data
 
 ```{r}
+# Check that CRS match
 st_crs(sst_2008) == st_crs(sst_2009)
 st_crs(sst_2008) == st_crs(sst_2010)
 st_crs(sst_2008) == st_crs(sst_2011)
 st_crs(sst_2008) == st_crs(sst_2012)
-```
 
-
-
-```{r}
 sst_stack <- c(sst_2008, sst_2009, sst_2010, sst_2011, sst_2012)
 
 sst_stack <- st_redimension(sst_stack) # mean function was applied to layers separately until i used st_redimension
 
 mean_sst <- st_apply(sst_stack, c(1,2), mean, na.rm = TRUE) # mean sst accross 2008-2012
 
-mean_sst <- mean_sst - 273.15 # convert average sst kelvin - celsius
+mean_sst <- mean_sst - 273.15 # convert average sst from kelvin to celsius
 ```
 
 ```{r fig.height= 8 , fig.width= 10}
 map1 <- tm_shape(mean_sst) +
-  tm_raster(palette = hcl.colors(3,"Temps"),
-            breaks = c(4,6,8,10,12,14,16,20,30,35),
+  tm_raster(palette = hcl.colors(35,"Temps"),
+            style = "cont",
             colorNA = "black",
             title = "Sea surface temp (°C)",
             ) +
@@ -105,4 +103,49 @@ depth_resampled <- st_warp(depth,mean_sst, method = "near")
 depth_sst <- c(depth_resampled,mean_sst)
 # stacked successfully 
 ```
+
+##### Find suitable locations for oysters
+
+```{r}
+# rcl <- matrix(c(-Inf, 10, NA,
+#                  11, 30, 1,
+#                  31, Inf, NA),
+#                 ncol = 3, byrow = TRUE)
+# 
+# reclassified <- classify(rast(depth_resampled), rcl = rcl)
+# 
+# # reclassified[reclassified == 0] <- NA 
+
+
+map2 <- tm_shape(reclassified) +
+  tm_raster(palette = hcl.colors(3,"Temps"),
+            breaks = seq(11,30, by = 1),
+            colorNA = "white",
+            title = "Sea surface temp (°C)",
+            ) +
+  tm_graticules(lwd = 0.3, 
+                col = "white") +
+  tm_layout(fontfamily = "courier",
+            main.title = "Sea surface temperature, U.S West Coast",
+            main.title.size = 1,
+            legend.position = c("left","BOTTOM"),
+            legend.text.size = 0.5,
+            legend.title.color = "black",
+            legend.text.color = "black",
+            legend.height = 5,
+            legend.title.size = 0.5)
+
+map2
+```
+
+
+
+
+
+
+## sea surface temperature: 11-30°C
+## depth: 0-70 meters below sea level
+
+
+
 
