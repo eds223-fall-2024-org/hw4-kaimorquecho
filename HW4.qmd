@@ -1,6 +1,6 @@
 ---
 title: "Homework Assignment #4"
-subtitle: "Exploring patterns of environmental justice"
+subtitle: "Prioritizing potential aquaculture"
 author: "Kaiju Morquecho"
 date: last-modified
 execute: 
@@ -22,6 +22,7 @@ library(sf)
 library(here)
 library(raster)
 library(terra)
+library(FNN)
 ```
 
 ```{r}
@@ -30,7 +31,7 @@ sst_2009 <- read_stars(here("data","average_annual_sst_2009.tif"))
 sst_2010 <- read_stars(here("data","average_annual_sst_2010.tif"))
 sst_2011 <- read_stars(here("data","average_annual_sst_2011.tif"))
 sst_2012 <- read_stars(here("data","average_annual_sst_2012.tif"))
-bathymetry <- read_stars(here("data","depth.tif"))
+depth <- read_stars(here("data","depth.tif"))
 ezz <- read_sf(here("data","wc_regions_clean.shp"), quiet = TRUE)
 
 ```
@@ -44,63 +45,64 @@ st_crs(sst_2008) == st_crs(sst_2011)
 st_crs(sst_2008) == st_crs(sst_2012)
 ```
 
-```{r}
-# check that ezz matches and transform if not
-if(st_crs(sst_2008) == st_crs(ezz)) {
-  print("crs match!")
-} else { 
-  ezz <- st_transform(ezz, st_crs(sst_2008))
-}
 
-# check that bathymetry matches and transform if not
-if(st_crs(sst_2008) == st_crs(bathymetry)) {
-  print("crs match!")
-} else { 
-  bathymetry <- st_transform(bathymetry, st_crs(sst_2008))
-}
-```
-
-```{r}
-# double-check after transformation 
-
-if(st_crs(sst_2008) == st_crs(bathymetry)) {
-  print("crs match!")
-} else { 
-  print("crs don't match!")
-}
-
-if(st_crs(sst_2008) == st_crs(ezz)) {
-  print("crs match!")
-} else { 
-  print("crs don't match!")
-}
-```
 
 ```{r}
 sst_stack <- c(sst_2008, sst_2009, sst_2010, sst_2011, sst_2012)
-sst_stack <- st_redimension(sst_stack)
-mean_sst <- st_apply(sst_stack, c(1,2), mean, na.rm = TRUE)
-mean_sst <- mean_sst - 273.15
+
+sst_stack <- st_redimension(sst_stack) # mean function was applied to layers separately until i used st_redimension
+
+mean_sst <- st_apply(sst_stack, c(1,2), mean, na.rm = TRUE) # mean sst accross 2008-2012
+
+mean_sst <- mean_sst - 273.15 # convert average sst kelvin - celsius
 ```
 
-```{r fig.height= 9}
+```{r fig.height= 8 , fig.width= 10}
 map1 <- tm_shape(mean_sst) +
   tm_raster(palette = hcl.colors(3,"Temps"),
             breaks = c(4,6,8,10,12,14,16,20,30,35),
             colorNA = "black",
-            title = "Sea surface temperature (°C)",
+            title = "Sea surface temp (°C)",
             ) +
   tm_graticules(lwd = 0.3, 
                 col = "white") +
   tm_layout(fontfamily = "courier",
             main.title = "Sea surface temperature, U.S West Coast",
-            main.title.size = 1.2,
-            legend.position = c("right","TOP"),
-            legend.text.size = 0.8,
-            legend.title.color = "white",
-            legend.text.color = "white",
-            legend.height = 5)
+            main.title.size = 1,
+            legend.position = c("left","BOTTOM"),
+            legend.text.size = 0.5,
+            legend.title.color = "black",
+            legend.text.color = "black",
+            legend.height = 5,
+            legend.title.size = 0.5)
 
 map1
+```
+
+```{r}
+# check that depth matches mean_sst crs and transform if not
+if(st_crs(mean_sst) == st_crs(depth)) {
+  print("crs match!")
+} else { 
+  depth <- st_transform(depth, st_crs(mean_sst))
+}
+```
+
+```{r}
+# double-check after transformation 
+if(st_crs(mean_sst) == st_crs(depth)) {
+  print("crs match!")
+} else { 
+  print("crs don't match!")
+}
+```
+
+```{r}
+# match extents and resample to mean_sst resolution using nearest neighbor ("near")
+depth_resampled <- st_warp(depth,mean_sst, method = "near")
+
+# stack to verify
+depth_sst <- c(depth_resampled,mean_sst)
+# stacked successfully 
 ```
 
