@@ -56,14 +56,48 @@ mean_sst <- mean_sst - 273.15 # convert average sst from kelvin to celsius
 ```
 
 ```{r fig.height= 8 , fig.width= 10}
-
 map1 <- tm_shape(mean_sst) +
+  tm_raster(palette = rev(hcl.colors(5,"YlGnBu")),
+            style = "pretty",
+            colorNA = "black",
+            title = "Sea surface temp (°C)",
+            ) +
+  tm_graticules(lwd = 0.3, 
+                col = "white") +
+  tm_layout(fontfamily = "courier",
+            main.title = "Sea surface temperature, U.S West Coast",
+            main.title.size = 1,
+            inner.margins = c(0.001, 0.001, 0.001, 0.001),
+            legend.position = c("left","BOTTOM"),
+            legend.text.size = 0.5,
+            legend.title.color = "black",
+            legend.text.color = "black",
+            legend.height = 5,
+            legend.title.size = 0.5)
+
+map1
+```
+
+```{r}
+
+test<- read_stars(here("data","depth.tif"))
+
+test[test > 0] <- NA
+
+rcl_depth <- matrix(c(-Inf, 0, 0,
+                0, 70, 1,
+                70, Inf, 0),
+                ncol = 3, byrow = TRUE)
+
+depth_resampled <- rast(test)
+
+map2 <- tm_shape(test) +
   tm_raster(palette = rev(hcl.colors(8,"Mako")),
             style = "cont",
             colorNA = "black",
             title = "Sea surface temp (°C)",
             ) +
-  tm_graticules(lwd = 0.3, 
+  tm_graticules(lwd = 0.3,
                 col = "white") +
   tm_layout(fontfamily = "courier",
             main.title = "Sea surface temperature, U.S West Coast",
@@ -75,7 +109,7 @@ map1 <- tm_shape(mean_sst) +
             legend.height = 5,
             legend.title.size = 0.5)
 
-map1
+map2
 ```
 
 ```{r}
@@ -107,60 +141,110 @@ depth_sst <- c(depth_resampled,mean_sst)
 ##### Find suitable locations for oysters
 
 ```{r fig.height= 8 , fig.width= 10}
-rcl <- matrix(c(-Inf, 11, 0,
+
+# reclassify mean_sst
+rcl_sst <- matrix(c(-Inf, 11, 0,
                 11, 30, 1,
                 30, Inf, 0),
                 ncol = 3, byrow = TRUE)
 
-reclassified <- classify(rast(mean_sst), rcl = rcl)
+mean_sst <- rast(mean_sst)
 
-map2 <- tm_shape(reclassified == 1) +
-  tm_raster(palette = c("skyblue","indianred"),
+reclassified_sst <- classify(mean_sst, rcl = rcl_sst)
+
+# reclassify depth
+rcl_depth <- matrix(c(-Inf, 0, 0,
+                0, 70, 1,
+                70, Inf, 0),
+                ncol = 3, byrow = TRUE)
+
+depth_resampled <- rast(depth_resampled)
+
+reclassified_depth <- classify(depth_resampled, rcl = rcl_depth)
+
+suitable_locations <- reclassified_sst * reclassified_depth
+```
+
+
+```{r fig.height= 8 , fig.width= 10}
+map3 <- tm_shape(reclassified_sst) +
+  tm_raster(palette = c("indianred","skyblue"),
             style = "cat",
             colorNA = "black",
             title = "Sea surface temp (°C)",
-            ) + 
+            labels = c("Not suitable","Suitable location"),
+            textNA = "Land") + 
   tm_graticules(lwd = 0.3, 
                 col = "white") +
   tm_layout(fontfamily = "courier",
-            main.title = "Sea surface temperature, U.S West Coast",
-            main.title.size = 1,
-            legend.position = c("left","BOTTOM"),
-            legend.text.size = 0.5,
+            fontface = "bold",
+            main.title = "Suitable SST (°C) for oyster growth, U.S West Coast",
+            main.title.size = 0.7,
+            inner.margins = c(0.001, 0.001, 0.001, 0.001),
+            legend.position = c(0.57,0.8),
+            legend.frame = FALSE,
+            legend.text.size = 0.4,
+            legend.title.size = 0.6,
             legend.title.color = "white",
             legend.text.color = "white",
-            legend.height = 5,
-            legend.title.size = 0.5,
-            inner.margins = c(0.001, 0.001, 0.001, 0.001))
-map2
+            legend.text.fontface = "bold",
+            legend.title.fontface = "bold")
+map3
 ```
 
 ```{r}
-map3 <- tm_shape(depth_resampled) +
-  tm_raster(palette = rev(hcl.colors(8,"Mako")),
-            style = "cont",
+map4 <- tm_shape(reclassified_depth) +
+  tm_raster(palette = c("indianred","skyblue"),
+            style = "cat",
             colorNA = "black",
-            title = "Sea surface temp (°C)",
-            ) +
+            title = "Suitability",
+            labels = c("Not suitable","Suitable location"),
+            textNA = "Land") +
   tm_graticules(lwd = 0.3, 
                 col = "white") +
   tm_layout(fontfamily = "courier",
-            main.title = "Depth, U.S West Coast",
-            main.title.size = 1,
-            legend.position = c("left","BOTTOM"),
-            legend.text.size = 0.5,
-            legend.title.color = "black",
-            legend.text.color = "black",
-            legend.height = 5,
-            legend.title.size = 0.5)
+            main.title = "Suitable depth(m) for oyster growth, U.S West Coast",
+            main.title.size = 0.7,
+            inner.margins = c(0.001, 0.001, 0.001, 0.001),
+            legend.position = c(0.57,0.8),
+            legend.frame = FALSE,
+            legend.text.size = 0.4,
+            legend.title.size = 0.6,
+            legend.title.color = "white",
+            legend.text.color = "white",
+            legend.text.fontface = "bold",
+            legend.title.fontface = "bold")
 
-map1
+map4
 ```
 
+```{r}
+map5 <- tm_shape(suitable_locations) +
+  tm_raster(palette =  c("indianred","skyblue"),
+            style = "cat",
+            colorNA = "black",
+            title = "Suitability",
+            labels = c("Not suitable","Suitable location"),
+            textNA = "Land") +
+  tm_graticules(lwd = 0.3, 
+                col = "white") +
+  tm_layout(fontfamily = "courier",
+            main.title = "Suitable oyster growth locations (m)(°C)",
+            main.title.size = 0.7,
+            inner.margins = c(0.001, 0.001, 0.001, 0.001),
+            legend.position = c(0.57,0.8),
+            legend.frame = FALSE,
+            legend.text.size = 0.4,
+            legend.title.size = 0.6,
+            legend.title.color = "white",
+            legend.text.color = "white",
+            legend.text.fontface = "bold",
+            legend.title.fontface = "bold")
 
+map5
+```
 
-
-## sea surface temperature: 11-30°C
+## sea surface temperature: 11-30°C done
 ## depth: 0-70 meters below sea level
 
 
