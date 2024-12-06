@@ -172,8 +172,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>map1 <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(mean_sst) <span class="sc">+</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_raster</span>(<span class="at">palette =</span> <span class="fu">hcl.colors</span>(<span class="dv">3</span>,<span class="st">"Temps"</span>),</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>            <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">4</span>,<span class="dv">6</span>,<span class="dv">8</span>,<span class="dv">10</span>,<span class="dv">12</span>,<span class="dv">14</span>,<span class="dv">16</span>,<span class="dv">20</span>,<span class="dv">30</span>,<span class="dv">35</span>),</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_raster</span>(<span class="at">palette =</span> <span class="fu">rev</span>(<span class="fu">hcl.colors</span>(<span class="dv">8</span>,<span class="st">"Mako"</span>)),</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>            <span class="at">style =</span> <span class="st">"cont"</span>,</span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">colorNA =</span> <span class="st">"black"</span>,</span>
 <span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">title =</span> <span class="st">"Sea surface temp (°C)"</span>,</span>
 <span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>            ) <span class="sc">+</span></span>
@@ -220,47 +220,73 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># match extents and resample to mean_sst resolution using nearest neighbor ("near")</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>depth_resampled <span class="ot">&lt;-</span> <span class="fu">st_warp</span>(depth,mean_sst, <span class="at">method =</span> <span class="st">"near"</span>)</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co"># stack to verify</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>depth_sst <span class="ot">&lt;-</span> <span class="fu">c</span>(depth_resampled,mean_sst)</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="co"># stacked successfully </span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co"># stack to verify</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>depth_sst <span class="ot">&lt;-</span> <span class="fu">c</span>(depth_resampled,mean_sst)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co"># stacked successfully </span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="find-suitable-locations-for-oysters" class="level5">
 <h5 class="anchored" data-anchor-id="find-suitable-locations-for-oysters">Find suitable locations for oysters</h5>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>rcl <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="sc">-</span><span class="cn">Inf</span>, <span class="dv">10</span>, <span class="cn">NA</span>,</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>                 <span class="dv">11</span>, <span class="dv">30</span>, <span class="dv">1</span>,</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>                 <span class="dv">31</span>, <span class="cn">Inf</span>, <span class="cn">NA</span>),</span>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>rcl <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="sc">-</span><span class="cn">Inf</span>, <span class="dv">11</span>, <span class="dv">0</span>,</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>                <span class="dv">11</span>, <span class="dv">30</span>, <span class="dv">1</span>,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>                <span class="dv">30</span>, <span class="cn">Inf</span>, <span class="dv">0</span>),</span>
 <span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">ncol =</span> <span class="dv">3</span>, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>reclassified <span class="ot">&lt;-</span> <span class="fu">classify</span>(<span class="fu">rast</span>(depth_resampled), <span class="at">rcl =</span> rcl)</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>reclassified <span class="ot">&lt;-</span> <span class="fu">classify</span>(<span class="fu">rast</span>(mean_sst), <span class="at">rcl =</span> rcl)</span>
 <span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="co"># reclassified[reclassified == 0] &lt;- NA </span></span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>map2 <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(reclassified) <span class="sc">+</span></span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_raster</span>(<span class="at">palette =</span> <span class="fu">hcl.colors</span>(<span class="dv">3</span>,<span class="st">"Temps"</span>),</span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>            <span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">11</span>,<span class="dv">30</span>, <span class="at">by =</span> <span class="dv">1</span>),</span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>            <span class="at">colorNA =</span> <span class="st">"white"</span>,</span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">title =</span> <span class="st">"Sea surface temp (°C)"</span>,</span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>            ) <span class="sc">+</span></span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_graticules</span>(<span class="at">lwd =</span> <span class="fl">0.3</span>, </span>
-<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>                <span class="at">col =</span> <span class="st">"white"</span>) <span class="sc">+</span></span>
-<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">fontfamily =</span> <span class="st">"courier"</span>,</span>
-<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title =</span> <span class="st">"Sea surface temperature, U.S West Coast"</span>,</span>
-<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
-<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"left"</span>,<span class="st">"BOTTOM"</span>),</span>
-<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.text.size =</span> <span class="fl">0.5</span>,</span>
-<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.title.color =</span> <span class="st">"black"</span>,</span>
-<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.text.color =</span> <span class="st">"black"</span>,</span>
-<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.height =</span> <span class="dv">5</span>,</span>
-<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.title.size =</span> <span class="fl">0.5</span>)</span>
-<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a>map2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>map2 <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(reclassified <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_raster</span>(<span class="at">palette =</span> <span class="fu">c</span>(<span class="st">"indianred"</span>,<span class="st">"skyblue"</span>),</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>            <span class="at">style =</span> <span class="st">"cat"</span>,</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>            <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">11</span>,<span class="dv">14</span>, <span class="dv">17</span>, <span class="dv">20</span>, <span class="dv">23</span>, <span class="dv">26</span>, <span class="dv">29</span>, <span class="dv">30</span>),</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>            <span class="at">colorNA =</span> <span class="st">"black"</span>,</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>            <span class="at">title =</span> <span class="st">"Sea surface temp (°C)"</span>,</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>            ) <span class="sc">+</span></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_graticules</span>(<span class="at">lwd =</span> <span class="fl">0.3</span>, </span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>                <span class="at">col =</span> <span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">fontfamily =</span> <span class="st">"courier"</span>,</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title =</span> <span class="st">"Sea surface temperature, U.S West Coast"</span>,</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"left"</span>,<span class="st">"BOTTOM"</span>),</span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.text.size =</span> <span class="fl">0.5</span>,</span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.title.color =</span> <span class="st">"white"</span>,</span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.text.color =</span> <span class="st">"white"</span>,</span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.height =</span> <span class="dv">5</span>,</span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.title.size =</span> <span class="fl">0.5</span>,</span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a>            <span class="at">inner.margins =</span> <span class="fu">c</span>(<span class="fl">0.001</span>, <span class="fl">0.001</span>, <span class="fl">0.001</span>, <span class="fl">0.001</span>))</span>
+<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a>map2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="HW4_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="HW4_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>map3 <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(depth_resampled) <span class="sc">+</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_raster</span>(<span class="at">palette =</span> <span class="fu">rev</span>(<span class="fu">hcl.colors</span>(<span class="dv">8</span>,<span class="st">"Mako"</span>)),</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>            <span class="at">style =</span> <span class="st">"cont"</span>,</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">colorNA =</span> <span class="st">"black"</span>,</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">title =</span> <span class="st">"Sea surface temp (°C)"</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>            ) <span class="sc">+</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_graticules</span>(<span class="at">lwd =</span> <span class="fl">0.3</span>, </span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>                <span class="at">col =</span> <span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">fontfamily =</span> <span class="st">"courier"</span>,</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title =</span> <span class="st">"Depth, U.S West Coast"</span>,</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>            <span class="at">main.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"left"</span>,<span class="st">"BOTTOM"</span>),</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.text.size =</span> <span class="fl">0.5</span>,</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.title.color =</span> <span class="st">"black"</span>,</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.text.color =</span> <span class="st">"black"</span>,</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.height =</span> <span class="dv">5</span>,</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.title.size =</span> <span class="fl">0.5</span>)</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>map1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="HW4_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
