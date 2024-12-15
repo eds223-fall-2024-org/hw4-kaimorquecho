@@ -33,7 +33,7 @@ sst_2010 <- read_stars(here("data","average_annual_sst_2010.tif"))
 sst_2011 <- read_stars(here("data","average_annual_sst_2011.tif"))
 sst_2012 <- read_stars(here("data","average_annual_sst_2012.tif"))
 depth <- read_stars(here("data","depth.tif"))
-ezz <- read_sf(here("data","wc_regions_clean.shp"), quiet = TRUE)
+eez <- read_sf(here("data","wc_regions_clean.shp"), quiet = TRUE)
 
 ```
 
@@ -57,9 +57,10 @@ mean_sst <- mean_sst - 273.15 # convert average sst from kelvin to celsius
 
 ```{r fig.height= 8 , fig.width= 10}
 map1 <- tm_shape(mean_sst) +
-  tm_raster(palette = rev(hcl.colors(5,"YlGnBu")),
-            style = "pretty",
+  tm_raster(palette = rev(hcl.colors(5,"Inferno")),
+            style = "cont",
             colorNA = "black",
+            textNA = "Land",
             title = "Sea surface temp (°C)",
             ) +
   tm_graticules(lwd = 0.3, 
@@ -76,40 +77,6 @@ map1 <- tm_shape(mean_sst) +
             legend.title.size = 0.5)
 
 map1
-```
-
-```{r}
-
-test<- read_stars(here("data","depth.tif"))
-
-test[test > 0] <- NA
-
-rcl_depth <- matrix(c(-Inf, 0, 0,
-                0, 70, 1,
-                70, Inf, 0),
-                ncol = 3, byrow = TRUE)
-
-depth_resampled <- rast(test)
-
-map2 <- tm_shape(test) +
-  tm_raster(palette = rev(hcl.colors(8,"Mako")),
-            style = "cont",
-            colorNA = "black",
-            title = "Sea surface temp (°C)",
-            ) +
-  tm_graticules(lwd = 0.3,
-                col = "white") +
-  tm_layout(fontfamily = "courier",
-            main.title = "Sea surface temperature, U.S West Coast",
-            main.title.size = 1,
-            legend.position = c("left","BOTTOM"),
-            legend.text.size = 0.5,
-            legend.title.color = "black",
-            legend.text.color = "black",
-            legend.height = 5,
-            legend.title.size = 0.5)
-
-map2
 ```
 
 ```{r}
@@ -138,6 +105,27 @@ depth_sst <- c(depth_resampled,mean_sst)
 # stacked successfully 
 ```
 
+```{r}
+map2 <- tm_shape(depth_resampled) +
+  tm_raster(palette = rev(hcl.colors(8,"Mako")),
+            style = "cont",
+            colorNA = "black",
+            title = "Depth (m)") +
+  tm_graticules(lwd = 0.3,
+                col = "white") +
+  tm_layout(fontfamily = "courier",
+            main.title = "Depth, U.S West Coast",
+            main.title.size = 1,
+            legend.position = c("left","BOTTOM"),
+            legend.text.size = 0.5,
+            legend.title.color = "black",
+            legend.text.color = "black",
+            legend.height = 5,
+            legend.title.size = 0.5)
+
+map2
+```
+
 ##### Find suitable locations for oysters
 
 ```{r fig.height= 8 , fig.width= 10}
@@ -153,9 +141,10 @@ mean_sst <- rast(mean_sst)
 reclassified_sst <- classify(mean_sst, rcl = rcl_sst)
 
 # reclassify depth
-rcl_depth <- matrix(c(-Inf, 0, 0,
-                0, 70, 1,
-                70, Inf, 0),
+
+rcl_depth <- matrix(c(-Inf, -70, 0,
+                -70, 0, 1,
+                0, Inf, 0),
                 ncol = 3, byrow = TRUE)
 
 depth_resampled <- rast(depth_resampled)
@@ -164,7 +153,6 @@ reclassified_depth <- classify(depth_resampled, rcl = rcl_depth)
 
 suitable_locations <- reclassified_sst * reclassified_depth
 ```
-
 
 ```{r fig.height= 8 , fig.width= 10}
 map3 <- tm_shape(reclassified_sst) +
@@ -244,8 +232,49 @@ map5 <- tm_shape(suitable_locations) +
 map5
 ```
 
-## sea surface temperature: 11-30°C done
-## depth: 0-70 meters below sea level
+```{r}
+eez_map <- tm_shape(eez) +
+  tm_polygons(col = "rgn",
+              palette = hcl.colors(5, "Temp"),
+              border.col = "black",
+              lwd = 0.7,
+              title = "EEZ region") +
+  tm_text(text = "rgn",
+          size = 0.6,
+          col = "black",
+          fontface = "bold") +
+  tm_layout(fontfamily = "courier",
+            main.title = "Exclusive Economic Zone (EEZ)",
+            main.title.size = 0.8,
+            main.title.fontface = "bold",
+            legend.text.size = 0.5,
+            legend.title.size = 0.6,
+            legend.position = c("left","BOTTOM")) +
+  tm_graticules(col = "black",
+                lwd = 0.3,
+                alpha = 0.5) 
+  
+
+eez_map
+```
+
+
+
+
+
+
+```{r}
+# suitable_locations set to NAs
+# then mask suitable cells, using eez as vector 
+# cell area of suitable locations 
+# eez_rast <- rasterize(eez), can use suitable locations rast as template
+# need template raster with matching res, crs 
+# zonal function terra
+#  
+# field argument rasterize()
+# 
+# any species, megaladon 
+```
 
 
 
