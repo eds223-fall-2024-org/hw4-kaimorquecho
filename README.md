@@ -1,3 +1,11 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/M7SH_7jN)
+
 # EDS223-HW4
 Homework Assignment #4 for EDS 223 (Geospatial Analysis and Remote Sensing)
+
+# Data Citations
+
+[NOAA](https://coralreefwatch.noaa.gov/product/5km/index_5km_ssta.php)
+
+[GEBCO](https://www.gebco.net/data_and_products/gridded_bathymetry_data/#area)
+
+[SeaLifeBase](https://www.sealifebase.ca/search.php)
