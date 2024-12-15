@@ -131,9 +131,9 @@ map2
 ```{r fig.height= 8 , fig.width= 10}
 
 # reclassify mean_sst
-rcl_sst <- matrix(c(-Inf, 11, 0,
+rcl_sst <- matrix(c(-Inf, 11, NA,
                 11, 30, 1,
-                30, Inf, 0),
+                30, Inf, NA),
                 ncol = 3, byrow = TRUE)
 
 mean_sst <- rast(mean_sst)
@@ -142,9 +142,9 @@ reclassified_sst <- classify(mean_sst, rcl = rcl_sst)
 
 # reclassify depth
 
-rcl_depth <- matrix(c(-Inf, -70, 0,
+rcl_depth <- matrix(c(-Inf, -70, NA,
                 -70, 0, 1,
-                0, Inf, 0),
+                0, Inf, NA),
                 ncol = 3, byrow = TRUE)
 
 depth_resampled <- rast(depth_resampled)
@@ -156,12 +156,12 @@ suitable_locations <- reclassified_sst * reclassified_depth
 
 ```{r fig.height= 8 , fig.width= 10}
 map3 <- tm_shape(reclassified_sst) +
-  tm_raster(palette = c("indianred","skyblue"),
+  tm_raster(palette = "lightgoldenrod",
             style = "cat",
             colorNA = "black",
             title = "Sea surface temp (°C)",
-            labels = c("Not suitable","Suitable location"),
-            textNA = "Land") + 
+            labels = "Suitable location",
+            textNA = " ") + 
   tm_graticules(lwd = 0.3, 
                 col = "white") +
   tm_layout(fontfamily = "courier",
@@ -182,12 +182,12 @@ map3
 
 ```{r}
 map4 <- tm_shape(reclassified_depth) +
-  tm_raster(palette = c("indianred","skyblue"),
+  tm_raster(palette = "skyblue",
             style = "cat",
             colorNA = "black",
             title = "Suitability",
-            labels = c("Not suitable","Suitable location"),
-            textNA = "Land") +
+            labels = "Suitable location",
+            textNA = " ") +
   tm_graticules(lwd = 0.3, 
                 col = "white") +
   tm_layout(fontfamily = "courier",
@@ -208,12 +208,12 @@ map4
 
 ```{r}
 map5 <- tm_shape(suitable_locations) +
-  tm_raster(palette =  c("indianred","skyblue"),
+  tm_raster(palette = "seagreen2",
             style = "cat",
             colorNA = "black",
             title = "Suitability",
-            labels = c("Not suitable","Suitable location"),
-            textNA = "Land") +
+            labels = "Suitable location",
+            textNA = " ") +
   tm_graticules(lwd = 0.3, 
                 col = "white") +
   tm_layout(fontfamily = "courier",
@@ -254,10 +254,32 @@ eez_map <- tm_shape(eez) +
                 lwd = 0.3,
                 alpha = 0.5) 
   
-
 eez_map
 ```
 
+```{r}
+# check crs of eez and 
+if(st_crs(suitable_locations) == st_crs(eez)) {
+  print("crs match!")
+} else { 
+  print("crs don't match!")
+}
+
+eez <- st_transform(eez, st_crs(suitable_locations))
+
+if(st_crs(suitable_locations) == st_crs(eez)) {
+  print("crs match!")
+} else { 
+  print("crs don't match!")
+}
+```
+
+```{r}
+mask <- mask(suitable_locations, eez)
+
+
+
+```
 
 
 
