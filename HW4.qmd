@@ -9,6 +9,8 @@ execute:
   message: false
 format:
   html:
+    code-fold: true
+    code-summary: "Code"
     toc: true
 editor_options: 
   chunk_output_type: console
@@ -87,6 +89,8 @@ if(st_crs(mean_sst) == st_crs(depth)) {
   depth <- st_transform(depth, st_crs(mean_sst))
 }
 ```
+
+##### Check CRS
 
 ```{r}
 # double-check after transformation 
@@ -276,6 +280,8 @@ if(st_crs(suitable_locations) == st_crs(eez)) {
 }
 ```
 
+##### Make mask of suitable locations and map EEZs
+
 ```{r}
 # make mask of suitable locations
 mask_locations <- mask(suitable_locations, eez)
@@ -336,4 +342,138 @@ species_map <- tm_shape(depth_resampled) +
 species_map 
 
 ```
+
+##### Create a function 
+
+```{r}
+generate_species_map <- function(min_sst, max_sst, min_depth, max_depth, species_name) {
+
+  st_crs(sst_2008) == st_crs(sst_2009)
+  st_crs(sst_2008) == st_crs(sst_2010)
+  st_crs(sst_2008) == st_crs(sst_2011)
+  st_crs(sst_2008) == st_crs(sst_2012)
+
+  sst_stack <- c(sst_2008, sst_2009, sst_2010, sst_2011, sst_2012)
+
+  sst_stack <- st_redimension(sst_stack) # mean function was applied to layers separately until i used st_redimension
+
+  mean_sst <- st_apply(sst_stack, c(1,2), mean, na.rm = TRUE) # mean sst accross 2008-2012
+
+  mean_sst <- mean_sst - 273.15 # convert average sst from kelvin to celsius
+  
+  # check that depth matches mean_sst crs and transform if not
+  if(st_crs(mean_sst) == st_crs(depth)) {
+   print("crs match!")
+  } else { 
+    depth <- st_transform(depth, st_crs(mean_sst))
+  }
+  # double-check after transformation 
+  if(st_crs(mean_sst) == st_crs(depth)) {
+   print("crs match!")
+  } else { 
+   print("crs don't match!")
+  }
+  
+  # match extents and resample to mean_sst resolution using nearest neighbor ("near")
+  depth_resampled <- st_warp(depth,mean_sst, method = "near")
+  # stack to verify
+  depth_sst <- c(depth_resampled,mean_sst)
+  # stacked successfully 
+  
+  
+  # Reclassify mean SST
+  rcl_sst <- matrix(c(-Inf, min_sst, NA,
+                      min_sst, max_sst, 1,
+                      max_sst, Inf, NA),
+                    ncol = 3, byrow = TRUE)
+  
+  mean_sst <- rast(mean_sst)
+  
+  reclassified_sst <- classify(mean_sst, rcl = rcl_sst)
+  
+  # Reclassify depth
+  rcl_depth <- matrix(c(-Inf, max_depth, NA,
+                        max_depth, min_depth, 1,
+                        min_depth, Inf, NA),
+                      ncol = 3, byrow = TRUE)
+  
+  depth_resampled <- rast(depth_resampled)
+  
+  reclassified_depth <- classify(depth_resampled, rcl = rcl_depth)
+  
+  # Suitable locations (SST * Depth)
+  suitable_locations <- reclassified_sst * reclassified_depth
+  
+  # Mask suitable locations to EEZ
+  mask_locations <- mask(suitable_locations, eez)
+  
+  # Calculate cell area
+  cell_area <- cellSize(x = mask_locations, mask = TRUE, unit = "km")
+  
+  # Rasterize EEZ vector
+  eez_raster <- rasterize(eez, cell_area, field = "rgn_id")
+  
+  # Zonal statistics for suitable area within each EEZ
+  suitable_eez <- zonal(x = cell_area,
+                        z = eez_raster,
+                        fun = "sum",
+                        as.raster = TRUE, 
+                        na.rm = TRUE)
+  
+  species <- tm_shape(depth_resampled) +
+  tm_raster(palette = hcl.colors(8,"Berlin"),
+            style = "cont",
+            legend.show = FALSE) +
+  tm_shape(suitable_eez) +
+  tm_raster(palette = rev(hcl.colors(5, "BuGn")),
+            style = "cat",
+            title = expression("Total suitable area (km^2*)"),
+            legend.is.portrait = FALSE) +
+  tm_shape(eez) + 
+  tm_text(text = "rgn",
+          size = 0.55,
+          col = "black") +
+  tm_layout(fontfamily = "courier",
+            fontface = "bold",
+            main.title = paste0("Total Suitable Area for ", species_name, " Growth Across EEZs"),
+            main.title.size = 0.8,
+            main.title.fontface = "bold",
+            inner.margins = c(0.001, 0.001, 0.001, 0.001),
+            legend.text.size = 0.6,
+            legend.title.size = 0.6,
+            legend.title.color = "Black",
+            legend.text.color = "Black",
+            legend.outside = TRUE,
+            legend.outside.position = "bottom",
+            legend.stack = "horizontal",
+            legend.width = 7, 
+            legend.height = 0.5) +
+  tm_graticules(col = "white",
+                lwd = 0.3,
+                alpha = 0.5) 
+
+species           
+              
+}
+
+```
+
+##### Test the function
+
+```{r}
+species <- generate_species_map(
+  min_sst = 11, 
+  max_sst = 20, 
+  min_depth = -1,  
+  max_depth = -120, 
+  species_name = "Lysmata amboinensis ('Skunk Cleaner Shrimp')"
+)
+print(species)
+
+```
+
+Reflection
+
+During this HW assignment I learned a clear and straightforward way to make a function without getting confused and running into error after error. Creating my workflow first made an enormous difference in how easy it was to make a function. In fact, making the function was the easiest part (except for a couple of erros I had to debut in the reclassification portion). I can imagine that a function would dramatically save time when I must repeat the same step or produce several objects given a list. 
+
 
