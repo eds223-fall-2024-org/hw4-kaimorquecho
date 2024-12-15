@@ -1,0 +1,91 @@
+---
+title: "function"
+format: html
+---
+
+## Function 
+
+```{r}
+generate_species_map <- function(min_sst, max_sst, min_depth, max_depth, species_name) {
+  
+  # Ensure min_depth is less than max_depth, otherwise swap
+  if (min_depth > max_depth) {
+    temp <- min_depth
+    min_depth <- max_depth
+    max_depth <- temp
+  }
+  
+  # Reclassify mean SST
+  rcl_sst <- matrix(c(-Inf, min_sst, NA,
+                      min_sst, max_sst, 1,
+                      max_sst, Inf, NA),
+                    ncol = 3, byrow = TRUE)
+  
+  reclassified_sst <- classify(rast(mean_sst), rcl = rcl_sst)
+  
+  # Reclassify depth
+  rcl_depth <- matrix(c(-Inf, min_depth, NA,
+                        min_depth, max_depth, 1,
+                        max_depth, Inf, NA),
+                      ncol = 3, byrow = TRUE)
+  
+  reclassified_depth <- classify(rast(depth_resampled), rcl = rcl_depth)
+  
+  # Suitable locations (SST * Depth)
+  suitable_locations <- reclassified_sst * reclassified_depth
+  
+  # Mask suitable locations to EEZ
+  mask_locations <- mask(suitable_locations, eez)
+  
+  # Calculate cell area
+  cell_area <- cellSize(x = mask_locations, mask = TRUE, unit = "km")
+  
+  # Rasterize EEZ vector
+  eez_raster <- rasterize(eez, cell_area, field = "rgn_id")
+  
+  # Zonal statistics for suitable area within each EEZ
+  suitable_eez <- zonal(x = cell_area, z = eez_raster, fun = "sum", as.raster = TRUE, na.rm = TRUE)
+  
+  # Generate map with EEZ polygons and suitable areas
+  species_map <- tm_shape(eez) +  # Ensure EEZ polygons are plotted
+    tm_polygons(col = "rgn", palette = hcl.colors(5, "Temp"), border.col = "black", lwd = 0.7,
+                title = "EEZ region") +  # Add EEZ polygons
+    tm_shape(suitable_eez) +  # Add suitable areas
+    tm_raster(palette = rev(hcl.colors(5, "BuGn")),
+              style = "cat",
+              title = expression("Zone priority / total suitable area (km"^2*")"),  # Subscript for km²
+              legend.is.portrait = FALSE) +
+    tm_layout(fontfamily = "courier",
+              fontface = "bold",
+              main.title = paste("Total Suitable Area for", species_name, "Growth Across EEZs"),
+              main.title.size = 0.8,
+              main.title.fontface = "bold",
+              inner.margins = c(0.001, 0.001, 0.001, 0.001),
+              legend.position = c("left", "bottom"),
+              legend.frame = FALSE,
+              legend.text.size = 0.4,
+              legend.title.size = 0.6,
+              legend.title.color = "white",
+              legend.text.color = "black",
+              legend.text.fontface = "bold",
+              legend.title.fontface = "bold") +
+    tm_graticules(col = "white", lwd = 0.3, alpha = 0.5)  # Add graticules
+  
+  # Return map
+  return(species_map)
+}
+
+
+```
+
+```{r}
+species_map <- generate_species_map(
+  min_sst = 22, 
+  max_sst = 29, 
+  min_depth = -70,  # Corrected depth range
+  max_depth = 0, 
+  species_name = "Shrimp"
+)
+print(species_map)
+
+```

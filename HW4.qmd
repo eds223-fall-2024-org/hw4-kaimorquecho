@@ -154,6 +154,7 @@ reclassified_depth <- classify(depth_resampled, rcl = rcl_depth)
 suitable_locations <- reclassified_sst * reclassified_depth
 ```
 
+
 ```{r fig.height= 8 , fig.width= 10}
 map3 <- tm_shape(reclassified_sst) +
   tm_raster(palette = "lightgoldenrod",
@@ -275,7 +276,7 @@ if(st_crs(suitable_locations) == st_crs(eez)) {
 }
 ```
 
-```{r fig.width= 2, fig.height= 1}
+```{r}
 # make mask of suitable locations
 mask_locations <- mask(suitable_locations, eez)
 
@@ -326,7 +327,7 @@ species_map <- tm_shape(depth_resampled) +
             legend.outside = TRUE,
             legend.outside.position = "bottom",
             legend.stack = "horizontal",
-            legend.width = 7,  # Adjust width if needed
+            legend.width = 7, 
             legend.height = 0.5) +
   tm_graticules(col = "white",
                 lwd = 0.3,
@@ -335,88 +336,4 @@ species_map <- tm_shape(depth_resampled) +
 species_map 
 
 ```
-
-## Function with shrimp species "Lysmata amboinensis"
-
-```{r}
-generate_species_map <- function(min_sst, max_sst, min_depth, max_depth, species_name) {
-  
-  # Reclassify mean SST
-  rcl_sst <- matrix(c(-Inf, min_sst, NA,
-                      min_sst, max_sst, 1,
-                      max_sst, Inf, NA),
-                    ncol = 3, byrow = TRUE)
-  
-  reclassified_sst <- classify(rast(mean_sst), rcl = rcl_sst)
-  
-  # Reclassify depth
-  rcl_depth <- matrix(c(-Inf, min_depth, NA,
-                        min_depth, max_depth, 1,
-                        max_depth, Inf, NA),
-                      ncol = 3, byrow = TRUE)
-  
-  reclassified_depth <- classify(rast(depth_resampled), rcl = rcl_depth)
-  
-  # Suitable locations (SST * Depth)
-  suitable_locations <- reclassified_sst * reclassified_depth
-  
-  # Mask suitable locations to EEZ
-  mask_locations <- mask(suitable_locations, eez)
-  
-  # Calculate cell area
-  cell_area <- cellSize(x = mask_locations, mask = TRUE, unit = "km")
-  
-  # Rasterize EEZ vector
-  eez_raster <- rasterize(eez, cell_area, field = "rgn_id")
-  
-  # Zonal statistics for suitable area within each EEZ
-  suitable_eez <- zonal(x = cell_area, z = eez_raster, fun = "sum", as.raster = TRUE, na.rm = TRUE)
-  
-  # Generate map
-  species_map <- tm_shape(depth_resampled) +
-    tm_raster(palette = hcl.colors(8, "Berlin"), style = "cont", legend.show = FALSE) +
-    tm_shape(suitable_eez) +
-    tm_raster(palette = rev(hcl.colors(5, "BuGn")),
-              style = "cat",
-              title = expression("Zone priority / total suitable area (km"^2*")"),  # Subscript for km²
-              legend.is.portrait = FALSE) +
-    tm_shape(eez) + 
-    tm_text(text = "rgn", size = 0.55, col = "black") +
-    tm_layout(fontfamily = "courier",
-              fontface = "bold",
-              main.title = paste("Total Suitable Area for", species_name, "Growth Across EEZs"),
-              main.title.size = 0.8,
-              main.title.fontface = "bold",
-              inner.margins = c(0.001, 0.001, 0.001, 0.001),
-              legend.text.size = 0.6,
-              legend.title.size = 0.6,
-              legend.title.color = "Black",
-              legend.text.color = "Black",
-              legend.outside = TRUE,
-              legend.outside.position = "bottom",
-              legend.stack = "horizontal") +
-    tm_graticules(col = "white", lwd = 0.3, alpha = 0.5)
-  
-  # Return map
-  return(species_map)
-}
-
-```
-
-### Test function
-
-```{r}
-species_map <- generate_species_map(
-  min_sst = 11, 
-  max_sst = 30, 
-  min_depth = -70, 
-  max_depth = 0, 
-  species_name = "Oyster"
-)
-
-species_map
-
-```
-
-
 
