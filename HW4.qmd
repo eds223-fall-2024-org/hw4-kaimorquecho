@@ -107,19 +107,19 @@ depth_sst <- c(depth_resampled,mean_sst)
 
 ```{r}
 map2 <- tm_shape(depth_resampled) +
-  tm_raster(palette = rev(hcl.colors(8,"Mako")),
+  tm_raster(palette = hcl.colors(8,"Berlin"),
             style = "cont",
-            colorNA = "black",
             title = "Depth (m)") +
   tm_graticules(lwd = 0.3,
                 col = "white") +
   tm_layout(fontfamily = "courier",
             main.title = "Depth, U.S West Coast",
             main.title.size = 1,
+            inner.margins = c(0.001, 0.001, 0.001, 0.001),
             legend.position = c("left","BOTTOM"),
             legend.text.size = 0.5,
-            legend.title.color = "black",
-            legend.text.color = "black",
+            legend.title.color = "white",
+            legend.text.color = "white",
             legend.height = 5,
             legend.title.size = 0.5)
 
@@ -182,7 +182,7 @@ map3
 
 ```{r}
 map4 <- tm_shape(reclassified_depth) +
-  tm_raster(palette = "skyblue",
+  tm_raster(palette = "seagreen2",
             style = "cat",
             colorNA = "black",
             title = "Suitability",
@@ -274,10 +274,64 @@ if(st_crs(suitable_locations) == st_crs(eez)) {
 }
 ```
 
-```{r}
-mask <- mask(suitable_locations, eez)
+```{r fig.width= 20, fig.height= 16}
+# make mask of suitable locations
+mask_locations <- mask(suitable_locations, eez)
 
+# find grid cells area 
+cell_area <-cellSize(x = mask_locations,
+             mask = TRUE,
+             unit = "km")
 
+# rasterize eez vector
+eez_raster <- rasterize(eez,cell_area,
+                        field = "rgn_id") 
+
+# use zonal function to find suitable areas within each eez
+suitable_eez <- zonal(x = cell_area,
+                      z = eez_raster, 
+                      fun = "sum",
+                      as.raster = TRUE,
+                      na.rm = TRUE)
+
+species_map <- tm_shape(depth_resampled) +
+  tm_raster(palette = hcl.colors(8,"Berlin"),
+            style = "cont",
+            legend.show = FALSE) +
+  tm_shape(suitable_eez) +
+  tm_raster(palette = rev(hcl.colors(5, "BuGn")),
+            style = "cat",
+            title = "Total suitable area (km) / EEZ region",
+            labels = c("Lowest, 438",
+                       "Low, 1,533",
+                       "Mid, 3,225",
+                       "High, 4,097",
+                       "Highest, 4,923"),
+            legend.is.portrait = FALSE) +
+  tm_shape(eez) + 
+  tm_text(text = "rgn",
+          size = 0.55,
+          col = "black") +
+  tm_layout(fontfamily = "courier",
+            fontface = "bold",
+            main.title = "Total Suitable Area for Oyster Growth Across EEZs",
+            main.title.size = 0.8,
+            main.title.fontface = "bold",
+            inner.margins = c(0.001, 0.001, 0.001, 0.001),
+            legend.text.size = 0.6,
+            legend.title.size = 0.6,
+            legend.title.color = "Black",
+            legend.text.color = "Black",
+            legend.outside = TRUE,
+            legend.outside.position = "bottom",
+            legend.stack = "horizontal",
+            legend.width = 7,  # Adjust width if needed
+            legend.height = 0.5) +
+  tm_graticules(col = "white",
+                lwd = 0.3,
+                alpha = 0.5) 
+
+species_map <- tmap_save(species_map, "species_map.html", width = 1200, height = 800)
 
 ```
 
