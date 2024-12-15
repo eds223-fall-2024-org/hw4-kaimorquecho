@@ -13,7 +13,11 @@ format:
 editor_options: 
   chunk_output_type: console
 ---
+
+
 ##### Load data and libraries
+
+
 
 ```{r}
 library(stars)
@@ -37,7 +41,11 @@ eez <- read_sf(here("data","wc_regions_clean.shp"), quiet = TRUE)
 
 ```
 
+
+
 ##### Process data
+
+
 
 ```{r}
 # Check that CRS match
@@ -126,7 +134,11 @@ map2 <- tm_shape(depth_resampled) +
 map2
 ```
 
+
+
 ##### Find suitable locations for oysters
+
+
 
 ```{r fig.height= 8 , fig.width= 10}
 
@@ -336,7 +348,11 @@ species_map
 
 ```
 
+
+
 ## Function with shrimp species "Lysmata amboinensis"
+
+
 
 ```{r}
 generate_species_map <- function(min_sst, max_sst, min_depth, max_depth, species_name) {
@@ -403,7 +419,11 @@ generate_species_map <- function(min_sst, max_sst, min_depth, max_depth, species
 
 ```
 
+
+
 ### Test function
+
+
 
 ```{r}
 species_map <- generate_species_map(
@@ -417,6 +437,4 @@ species_map <- generate_species_map(
 species_map
 
 ```
-
-
 
